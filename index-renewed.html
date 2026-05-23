@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MathMentor — Free AI Math Tutoring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f7f5f0; --surface: #ffffff; --surface2: #f0ede6;
+  --border: #e2ddd4; --border2: #ccc8be;
+  --text: #1a1814; --text2: #6b6760; --text3: #9b9790;
+  --accent: #2d5a3d; --accent2: #3d7a54;
+  --accent-bg: #eaf3ee; --accent-border: #b8d9c4;
+  --user-bg: #2d5a3d; --user-text: #ffffff;
+  --warn: #8b4513; --warn-bg: #fdf3ec; --warn-border: #e8c9a8;
+  --red: #c0392b; --red-bg: #fef0ee;
+  --blue: #1a56a0; --blue-bg: #eef4fd; --blue-border: #b8d0f0;
+  --radius: 12px; --radius-sm: 8px;
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'DM Mono', monospace;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.08);
+}
+body { font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+/* NAV */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(247,245,240,0.94); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px;
+}
+.nav-brand { font-family: var(--font-display); font-size: 1.4rem; color: var(--accent); text-decoration: none; display: flex; align-items: center; gap: 8px; }
+.nav-brand svg { width: 28px; height: 28px; }
+.nav-links { display: flex; gap: 4px; }
+.nav-btn { background: none; border: none; cursor: pointer; font-family: var(--font-body); font-size: 0.875rem; font-weight: 500; color: var(--text2); padding: 6px 14px; border-radius: var(--radius-sm); transition: all 0.15s; }
+.nav-btn:hover { background: var(--surface2); color: var(--text); }
+.nav-btn.active { background: var(--accent); color: white; }
+
+/* PAGES */
+.page { display: none; flex: 1; }
+.page.active { display: flex; flex-direction: column; }
+
+/* HERO */
+.hero { padding: 80px 2rem 50px; text-align: center; max-width: 740px; margin: 0 auto; animation: fadeUp 0.6s ease both; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.hero-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); border-radius: 999px; padding: 5px 14px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 24px; }
+.hero h1 { font-family: var(--font-display); font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1.15; margin-bottom: 20px; }
+.hero h1 em { color: var(--accent); font-style: italic; }
+.hero p { font-size: 1.1rem; color: var(--text2); line-height: 1.7; margin-bottom: 36px; max-width: 540px; margin-left: auto; margin-right: auto; }
+.hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-primary { background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 13px 28px; font-size: 1rem; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: all 0.15s; box-shadow: 0 2px 8px rgba(45,90,61,0.3); }
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 13px 28px; font-size: 1rem; font-weight: 500; font-family: var(--font-body); cursor: pointer; transition: all 0.15s; }
+.btn-secondary:hover { background: var(--surface2); }
+
+/* MODE CARDS */
+.mode-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; max-width: 900px; margin: 0 auto 60px; padding: 0 2rem; animation: fadeUp 0.6s 0.1s ease both; }
+.mode-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow); text-align: left; }
+.mode-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.mode-card-icon { font-size: 2rem; margin-bottom: 14px; }
+.mode-card h3 { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 8px; }
+.mode-card p { font-size: 0.875rem; color: var(--text2); line-height: 1.6; margin-bottom: 16px; }
+.mode-card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.mode-tag { padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 500; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+
+/* HOW IT WORKS */
+.section { padding: 40px 2rem 60px; max-width: 900px; margin: 0 auto; width: 100%; }
+.section-title { font-family: var(--font-display); font-size: 2rem; margin-bottom: 8px; }
+.section-sub { color: var(--text2); margin-bottom: 36px; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.step { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+.step-num { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 14px; border: 1px solid var(--accent-border); }
+.step h3 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+.step p { font-size: 0.875rem; color: var(--text2); line-height: 1.6; }
+
+/* FOOTER */
+footer { text-align: center; padding: 20px; font-size: 0.8rem; color: var(--text3); border-top: 1px solid var(--border); }
+
+/* ── TUTOR PAGE ── */
+#page-tutor { display: none; flex-direction: row; height: calc(100vh - 60px); }
+#page-tutor.active { display: flex; }
+
+.sidebar { width: 280px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.sidebar-header { padding: 16px; border-bottom: 1px solid var(--border); }
+.sidebar-header h3 { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); }
+.new-chat-btn { width: 100%; margin-top: 10px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 9px 14px; font-size: 0.875rem; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: background 0.15s; display: flex; align-items: center; gap: 6px; justify-content: center; }
+.new-chat-btn:hover { background: var(--accent2); }
+
+.subject-filter { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.subject-filter label, .mode-toggle label { font-size: 0.78rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 8px; }
+.subject-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 500; border: 1px solid var(--border2); background: var(--bg); color: var(--text2); cursor: pointer; transition: all 0.12s; }
+.chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+.mode-toggle { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.toggle-row { display: flex; gap: 6px; }
+.toggle-btn { flex: 1; padding: 6px 8px; border-radius: var(--radius-sm); font-size: 0.78rem; font-weight: 500; font-family: var(--font-body); border: 1px solid var(--border2); background: var(--bg); color: var(--text2); cursor: pointer; transition: all 0.12s; text-align: center; }
+.toggle-btn.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent-border); }
+
+.chat-history { flex: 1; overflow-y: auto; padding: 8px; }
+.history-item { padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.12s; margin-bottom: 2px; }
+.history-item:hover { background: var(--surface2); }
+.history-title { font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-sub { font-size: 0.75rem; color: var(--text3); margin-top: 2px; }
+
+.progress-section { padding: 14px 16px; border-top: 1px solid var(--border); }
+.progress-section h4 { font-size: 0.78rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 10px; }
+.topic-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 500; margin: 3px 3px 3px 0; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); }
+
+/* Chat area */
+.chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+.chat-topbar { padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.chat-topbar-left { display: flex; align-items: center; gap: 10px; }
+.grade-badge { padding: 4px 12px; border-radius: 999px; background: var(--accent-bg); color: var(--accent); font-size: 0.78rem; font-weight: 600; border: 1px solid var(--accent-border); }
+.chat-topbar h2 { font-size: 1rem; font-weight: 600; }
+.clear-btn { background: none; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 5px 12px; font-size: 0.8rem; color: var(--text2); cursor: pointer; font-family: var(--font-body); transition: all 0.12s; }
+.clear-btn:hover { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+
+.messages { flex: 1; overflow-y: auto; padding: 24px 20px; display: flex; flex-direction: column; gap: 20px; }
+.msg { display: flex; gap: 12px; max-width: 780px; animation: msgIn 0.25s ease; }
+@keyframes msgIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.msg.user { flex-direction: row-reverse; align-self: flex-end; }
+.msg.assistant { align-self: flex-start; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; }
+.avatar.user-av { background: var(--accent); color: white; }
+.avatar.ai-av { background: var(--surface); border: 1px solid var(--border); font-size: 1rem; }
+.bubble { padding: 12px 16px; border-radius: var(--radius); line-height: 1.7; font-size: 0.9375rem; max-width: 640px; }
+.msg.user .bubble { background: var(--user-bg); color: var(--user-text); border-radius: var(--radius) var(--radius-sm) var(--radius) var(--radius); }
+.msg.assistant .bubble { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm) var(--radius) var(--radius) var(--radius); box-shadow: var(--shadow); }
+.bubble code { font-family: var(--font-mono); background: var(--surface2); padding: 1px 5px; border-radius: 4px; font-size: 0.85em; border: 1px solid var(--border); }
+.bubble .katex { font-size: 1.05em; }
+
+.typing-indicator { display: flex; gap: 4px; padding: 4px 0; }
+.typing-indicator span { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); animation: bounce 1.2s infinite; }
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,80%,100% { transform:translateY(0); } 40% { transform:translateY(-6px); } }
+
+/* Image upload */
+.input-area { padding: 16px 20px; background: var(--surface); border-top: 1px solid var(--border); }
+.input-row { display: flex; gap: 10px; align-items: flex-end; }
+.input-wrap { flex: 1; position: relative; }
+.image-preview { display: none; margin-bottom: 8px; position: relative; width: fit-content; }
+.image-preview img { max-height: 80px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.image-preview-remove { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--red); color: white; border: none; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+textarea#chat-input { width: 100%; resize: none; min-height: 48px; max-height: 160px; padding: 12px 16px; border-radius: var(--radius); border: 1.5px solid var(--border2); background: var(--bg); font-family: var(--font-body); font-size: 0.9375rem; color: var(--text); line-height: 1.5; transition: border-color 0.15s; overflow-y: auto; }
+textarea#chat-input:focus { outline: none; border-color: var(--accent); }
+textarea#chat-input::placeholder { color: var(--text3); }
+.send-btn { width: 48px; height: 48px; border-radius: var(--radius); background: var(--accent); color: white; border: none; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.send-btn:hover { background: var(--accent2); }
+.send-btn:disabled { background: var(--border2); cursor: not-allowed; }
+.send-btn svg { width: 20px; height: 20px; }
+.upload-btn { width: 48px; height: 48px; border-radius: var(--radius); background: var(--surface2); color: var(--text2); border: 1px solid var(--border2); cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.upload-btn:hover { background: var(--blue-bg); color: var(--blue); border-color: var(--blue-border); }
+.upload-btn svg { width: 20px; height: 20px; }
+.input-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 0.78rem; color: var(--text3); }
+.grade-select { border: 1px solid var(--border2); background: var(--bg); border-radius: var(--radius-sm); padding: 4px 8px; font-size: 0.78rem; color: var(--text2); font-family: var(--font-body); cursor: pointer; }
+
+/* Welcome screen */
+.welcome-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
+.welcome-icon { font-size: 3rem; margin-bottom: 16px; }
+.welcome-screen h2 { font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 8px; }
+.welcome-screen p { color: var(--text2); margin-bottom: 28px; max-width: 400px; font-size: 0.9375rem; }
+.starter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 480px; width: 100%; }
+.starter-btn { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; text-align: left; cursor: pointer; font-family: var(--font-body); font-size: 0.85rem; color: var(--text); transition: all 0.15s; line-height: 1.4; }
+.starter-btn:hover { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+.starter-label { font-size: 0.7rem; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+
+/* ── DRILL PAGE ── */
+#page-drill { display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: 40px 2rem; }
+#page-drill.active { display: flex; }
+.drill-container { width: 100%; max-width: 560px; }
+.drill-header { margin-bottom: 32px; }
+.drill-header h1 { font-family: var(--font-display); font-size: 2rem; margin-bottom: 6px; }
+.drill-header p { color: var(--text2); }
+
+.drill-setup { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); }
+.drill-setup h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; }
+.drill-option-group { margin-bottom: 20px; }
+.drill-option-group label { font-size: 0.78rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 10px; }
+.drill-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.drill-chip { padding: 7px 16px; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500; border: 1.5px solid var(--border2); background: var(--bg); color: var(--text2); cursor: pointer; transition: all 0.12s; font-family: var(--font-body); }
+.drill-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+.drill-start-btn { width: 100%; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 1rem; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: all 0.15s; margin-top: 8px; }
+.drill-start-btn:hover { background: var(--accent2); }
+
+/* Active drill */
+.drill-active { display: none; }
+.drill-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+.drill-stat { text-align: center; }
+.drill-stat-val { font-family: var(--font-display); font-size: 1.6rem; color: var(--accent); }
+.drill-stat-label { font-size: 0.72rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+.drill-timer-ring { position: relative; width: 64px; height: 64px; }
+.drill-timer-ring svg { transform: rotate(-90deg); }
+.drill-timer-ring circle { fill: none; stroke-width: 4; }
+.drill-timer-ring .track { stroke: var(--border); }
+.drill-timer-ring .prog { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.drill-timer-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 1.1rem; color: var(--accent); }
+
+.drill-problem-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; text-align: center; box-shadow: var(--shadow); margin-bottom: 20px; }
+.drill-problem { font-family: var(--font-display); font-size: 3rem; color: var(--text); margin-bottom: 28px; }
+.drill-input { width: 100%; text-align: center; font-family: var(--font-display); font-size: 2rem; padding: 14px; border: 2px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); outline: none; transition: border-color 0.15s; }
+.drill-input:focus { border-color: var(--accent); }
+.drill-input.correct { border-color: var(--accent); background: var(--accent-bg); }
+.drill-input.wrong { border-color: var(--red); background: var(--red-bg); animation: shake 0.3s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+.drill-feedback { font-size: 0.9rem; color: var(--text3); margin-top: 12px; min-height: 24px; }
+.drill-feedback.correct-msg { color: var(--accent); font-weight: 600; }
+.drill-feedback.wrong-msg { color: var(--red); font-weight: 600; }
+
+.drill-submit-btn { width: 100%; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 1rem; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: all 0.15s; }
+.drill-submit-btn:hover { background: var(--accent2); }
+
+/* Results */
+.drill-results { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px; text-align: center; box-shadow: var(--shadow); }
+.drill-results h2 { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 6px; }
+.drill-results p { color: var(--text2); margin-bottom: 24px; }
+.result-score { font-family: var(--font-display); font-size: 4rem; color: var(--accent); margin: 16px 0; }
+.result-grade { display: inline-block; padding: 6px 20px; border-radius: 999px; font-size: 0.9rem; font-weight: 700; margin-bottom: 24px; }
+.grade-a { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); }
+.grade-b { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+.grade-c { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-border); }
+.grade-d { background: var(--red-bg); color: var(--red); border: 1px solid #f0c4be; }
+.drill-results-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* CURRICULUM PAGE */
+#page-curriculum { display: none; flex-direction: column; padding: 40px 2rem; max-width: 900px; margin: 0 auto; width: 100%; }
+#page-curriculum.active { display: flex; }
+.curriculum-header { margin-bottom: 32px; }
+.curriculum-header h1 { font-family: var(--font-display); font-size: 2rem; margin-bottom: 6px; }
+.curriculum-header p { color: var(--text2); }
+.curriculum-tracks { display: flex; flex-direction: column; gap: 32px; }
+.track { }
+.track-title { font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.track-title span { font-size: 1.4rem; }
+.topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.topic-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow); }
+.topic-card:hover { border-color: var(--accent); transform: translateY(-1px); background: var(--accent-bg); }
+.topic-card h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+.topic-card p { font-size: 0.78rem; color: var(--text2); }
+
+/* ABOUT PAGE */
+#page-about { max-width: 680px; margin: 0 auto; padding: 60px 2rem; }
+#page-about h1 { font-family: var(--font-display); font-size: 2.4rem; margin-bottom: 12px; }
+#page-about p { font-size: 1rem; color: var(--text2); line-height: 1.8; margin-bottom: 20px; }
+#page-about h2 { font-family: var(--font-display); font-size: 1.4rem; margin: 32px 0 10px; }
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  .sidebar { display: none; }
+  .starter-grid { grid-template-columns: 1fr; }
+  nav { padding: 0 1rem; }
+  .nav-btn { padding: 6px 8px; font-size: 0.78rem; }
+  .drill-problem { font-size: 2.2rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="#" onclick="showPage('home')">
+    <svg viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="8" fill="#2d5a3d"/><text x="6" y="20" font-family="serif" font-size="16" fill="white" font-style="italic">m</text></svg>
+    MathMentor
+  </a>
+  <div class="nav-links">
+    <button class="nav-btn active" id="nav-home" onclick="showPage('home')">Home</button>
+    <button class="nav-btn" id="nav-tutor" onclick="showPage('tutor')">Tutor</button>
+    <button class="nav-btn" id="nav-drill" onclick="showPage('drill')">Practice</button>
+    <button class="nav-btn" id="nav-curriculum" onclick="showPage('curriculum')">Topics</button>
+    <button class="nav-btn" id="nav-about" onclick="showPage('about')">About</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-badge">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><circle cx="6" cy="6" r="6"/></svg>
+      Free for all students
+    </div>
+    <h1>Math help that <em>actually</em> makes sense</h1>
+    <p>An AI tutor that explains step by step, drills your fundamentals, and adapts to how you learn — from multiplication tables to calculus.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="showPage('tutor')">Start tutoring — it's free</button>
+      <button class="btn-secondary" onclick="showPage('drill')">Practice drills</button>
+    </div>
+  </div>
+
+  <div class="mode-cards">
+    <div class="mode-card" onclick="showPage('tutor')">
+      <div class="mode-card-icon">✦</div>
+      <h3>AI Tutor</h3>
+      <p>Ask anything. Get step-by-step explanations, follow-up questions, and practice problems tailored to your level.</p>
+      <div class="mode-card-tags">
+        <span class="mode-tag">Algebra</span>
+        <span class="mode-tag">Geometry</span>
+        <span class="mode-tag">Calculus</span>
+        <span class="mode-tag">Statistics</span>
+      </div>
+    </div>
+    <div class="mode-card" onclick="showPage('drill')">
+      <div class="mode-card-icon">⚡</div>
+      <h3>Practice Drills</h3>
+      <p>Timed multiplication and division drills. Build speed and accuracy with clean, focused practice.</p>
+      <div class="mode-card-tags">
+        <span class="mode-tag">Multiplication</span>
+        <span class="mode-tag">Division</span>
+        <span class="mode-tag">1–3 digit</span>
+      </div>
+    </div>
+    <div class="mode-card" onclick="showPage('curriculum')">
+      <div class="mode-card-icon">📚</div>
+      <h3>Topic Modules</h3>
+      <p>Browse structured topics by subject. Pick anything and the AI tutor launches ready to teach it.</p>
+      <div class="mode-card-tags">
+        <span class="mode-tag">Guided paths</span>
+        <span class="mode-tag">All levels</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">How MathMentor works</h2>
+    <p class="section-sub">Not just answers — understanding.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><h3>Ask anything</h3><p>Type your question or upload a photo of your homework. No special format needed.</p></div>
+      <div class="step"><div class="step-num">2</div><h3>Get a real explanation</h3><p>MathMentor walks through every step, never just handing you the answer.</p></div>
+      <div class="step"><div class="step-num">3</div><h3>Practice to lock it in</h3><p>Get similar problems to try, with hints and solutions when you're stuck.</p></div>
+      <div class="step"><div class="step-num">4</div><h3>Drill the fundamentals</h3><p>Use timed drills to build speed on multiplication and division.</p></div>
+    </div>
+  </div>
+
+  <footer>MathMentor &nbsp;·&nbsp; Free AI math tutoring for students</footer>
+</div>
+
+<!-- TUTOR PAGE -->
+<div class="page" id="page-tutor">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h3>Sessions</h3>
+      <button class="new-chat-btn" onclick="newChat()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        New chat
+      </button>
+    </div>
+    <div class="subject-filter">
+      <label>Subject</label>
+      <div class="subject-chips">
+        <div class="chip active" onclick="setSubject(this,'Any')">Any</div>
+        <div class="chip" onclick="setSubject(this,'Algebra')">Algebra</div>
+        <div class="chip" onclick="setSubject(this,'Geometry')">Geometry</div>
+        <div class="chip" onclick="setSubject(this,'Calc')">Calc</div>
+        <div class="chip" onclick="setSubject(this,'Stats')">Stats</div>
+      </div>
+    </div>
+    <div class="mode-toggle">
+      <label>Explanation mode</label>
+      <div class="toggle-row">
+        <div class="toggle-btn active" onclick="setMode(this,'guided')">Guided</div>
+        <div class="toggle-btn" onclick="setMode(this,'hint')">Hint only</div>
+        <div class="toggle-btn" onclick="setMode(this,'full')">Full answer</div>
+      </div>
+    </div>
+    <div class="chat-history" id="chat-history">
+      <div style="padding:20px 12px;font-size:0.8rem;color:var(--text3);text-align:center;">Your sessions will appear here</div>
+    </div>
+    <div class="progress-section">
+      <h4>Topics seen</h4>
+      <div id="topic-pills" style="font-size:0.8rem;color:var(--text3);">Start a session to track topics</div>
+    </div>
+  </div>
+
+  <div class="chat-area">
+    <div class="chat-topbar">
+      <div class="chat-topbar-left">
+        <h2 id="chat-title">New session</h2>
+        <span class="grade-badge" id="grade-label">Grade 9–12</span>
+      </div>
+      <button class="clear-btn" onclick="clearChat()">Clear</button>
+    </div>
+    <div class="messages" id="messages">
+      <div class="welcome-screen" id="welcome-screen">
+        <div class="welcome-icon">✦</div>
+        <h2>What are you working on?</h2>
+        <p>Ask a question, upload a homework photo, or pick a topic below.</p>
+        <div class="starter-grid">
+          <button class="starter-btn" onclick="startWith('Can you explain how to solve a system of equations using substitution?')"><div class="starter-label">Algebra</div>Systems of equations</button>
+          <button class="starter-btn" onclick="startWith('I don\'t understand the chain rule. Can you walk me through it?')"><div class="starter-label">Calculus</div>Chain rule</button>
+          <button class="starter-btn" onclick="startWith('How do I find the area of a triangle using trigonometry?')"><div class="starter-label">Geometry</div>Triangle area & trig</button>
+          <button class="starter-btn" onclick="startWith('What is the difference between mean, median, and mode?')"><div class="starter-label">Statistics</div>Mean, median, mode</button>
+        </div>
+      </div>
+    </div>
+    <div class="input-area">
+      <div class="image-preview" id="image-preview">
+        <img id="preview-img" src="" alt="homework" />
+        <button class="image-preview-remove" onclick="removeImage()">✕</button>
+      </div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <textarea id="chat-input" placeholder="Ask a math question..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        </div>
+        <button class="upload-btn" onclick="document.getElementById('img-upload').click()" title="Upload homework photo">
+          <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="7" cy="9" r="1.5" fill="currentColor"/><path d="M2 14l4-4 3 3 3-4 4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <input type="file" id="img-upload" accept="image/*" style="display:none" onchange="handleImageUpload(event)" />
+        <button class="send-btn" id="send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 20 20" fill="none"><path d="M4 10h12M10 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="input-footer">
+        <span>Enter to send · Shift+Enter for new line · 📷 upload homework</span>
+        <select class="grade-select" id="grade-select" onchange="updateGrade()">
+          <option value="middle">Middle school</option>
+          <option value="high" selected>High school</option>
+          <option value="ap">AP / Advanced</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRILL PAGE -->
+<div class="page" id="page-drill">
+  <div class="drill-container">
+    <div class="drill-header">
+      <h1>Practice Drills</h1>
+      <p>Build speed and accuracy with timed arithmetic practice.</p>
+    </div>
+
+    <!-- Setup -->
+    <div class="drill-setup" id="drill-setup">
+      <h2>Set up your drill</h2>
+      <div class="drill-option-group">
+        <label>Operation</label>
+        <div class="drill-chips">
+          <button class="drill-chip active" onclick="drillSelect(this,'op','multiply')">✕ Multiplication</button>
+          <button class="drill-chip" onclick="drillSelect(this,'op','divide')">÷ Division</button>
+          <button class="drill-chip" onclick="drillSelect(this,'op','both')">Both</button>
+        </div>
+      </div>
+      <div class="drill-option-group">
+        <label>Difficulty</label>
+        <div class="drill-chips">
+          <button class="drill-chip active" onclick="drillSelect(this,'diff','1digit')">1-digit</button>
+          <button class="drill-chip" onclick="drillSelect(this,'diff','2digit')">2-digit</button>
+          <button class="drill-chip" onclick="drillSelect(this,'diff','3digit')">3-digit</button>
+          <button class="drill-chip" onclick="drillSelect(this,'diff','mixed')">Mixed</button>
+        </div>
+      </div>
+      <div class="drill-option-group">
+        <label>Number of questions</label>
+        <div class="drill-chips">
+          <button class="drill-chip" onclick="drillSelect(this,'count','10')">10</button>
+          <button class="drill-chip active" onclick="drillSelect(this,'count','20')">20</button>
+          <button class="drill-chip" onclick="drillSelect(this,'count','30')">30</button>
+          <button class="drill-chip" onclick="drillSelect(this,'count','50')">50</button>
+        </div>
+      </div>
+      <button class="drill-start-btn" onclick="startDrill()">Start drill →</button>
+    </div>
+
+    <!-- Active drill -->
+    <div class="drill-active" id="drill-active">
+      <div class="drill-topbar">
+        <div class="drill-stat">
+          <div class="drill-stat-val" id="drill-score">0</div>
+          <div class="drill-stat-label">Correct</div>
+        </div>
+        <div class="drill-timer-ring">
+          <svg width="64" height="64" viewBox="0 0 64 64">
+            <circle class="track" cx="32" cy="32" r="28" />
+            <circle class="prog" id="timer-ring" cx="32" cy="32" r="28" stroke-dasharray="175.9" stroke-dashoffset="0" />
+          </svg>
+          <div class="drill-timer-num" id="drill-timer">–</div>
+        </div>
+        <div class="drill-stat">
+          <div class="drill-stat-val" id="drill-qnum">1</div>
+          <div class="drill-stat-label">Question</div>
+        </div>
+      </div>
+
+      <div class="drill-problem-card">
+        <div class="drill-problem" id="drill-problem">–</div>
+        <input class="drill-input" id="drill-answer" type="number" placeholder="?" autocomplete="off"
+          onkeydown="if(event.key==='Enter') checkDrillAnswer()" />
+        <div class="drill-feedback" id="drill-feedback"></div>
+      </div>
+      <button class="drill-submit-btn" onclick="checkDrillAnswer()">Check answer</button>
+    </div>
+
+    <!-- Results -->
+    <div class="drill-results" id="drill-results">
+      <div style="font-size:3rem;margin-bottom:8px" id="result-emoji">🎉</div>
+      <h2>Drill complete!</h2>
+      <p id="result-subtitle">Here's how you did</p>
+      <div class="result-score" id="result-score">–</div>
+      <div class="result-grade" id="result-grade">–</div>
+      <p style="color:var(--text3);font-size:0.875rem;margin-bottom:24px" id="result-time">–</p>
+      <div class="drill-results-btns">
+        <button class="btn-primary" onclick="startDrill()">Try again</button>
+        <button class="btn-secondary" onclick="resetDrill()">Change settings</button>
+        <button class="btn-secondary" onclick="showPage('tutor')">Ask the tutor</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CURRICULUM PAGE -->
+<div class="page" id="page-curriculum">
+  <div class="curriculum-header">
+    <h1>Topic Modules</h1>
+    <p>Browse topics by subject — click any to open the AI tutor ready to teach it.</p>
+  </div>
+  <div class="curriculum-tracks" id="curriculum-tracks"></div>
+</div>
+
+<!-- ABOUT PAGE -->
+<div class="page" id="page-about">
+  <h1>About MathMentor</h1>
+  <p>MathMentor is a free AI-powered math tutoring platform built for middle and high school students. It was created to make quality math help accessible to every student, regardless of access to private tutors or expensive test prep resources.</p>
+  <h2>Why it exists</h2>
+  <p>Most AI tools just give you answers. MathMentor is different — it's designed around how people actually learn math. Instead of handing you the solution, it walks through the reasoning, asks follow-up questions to check understanding, and generates practice problems to lock in each concept.</p>
+  <h2>What makes it different</h2>
+  <p>Three things: a guided explanation mode that never skips steps, timed arithmetic drills for building fundamental fluency, and a topic library that gives students a clear path through any subject — from multiplication tables to AP Calculus.</p>
+</div>
+
+<script>
+// ── STATE ──
+const state = {
+  page: 'home', subject: 'Any', mode: 'guided', grade: 'high',
+  messages: [], sessions: JSON.parse(localStorage.getItem('mm_sessions')||'[]'),
+  topics: JSON.parse(localStorage.getItem('mm_topics')||'[]'),
+  totalQ: parseInt(localStorage.getItem('mm_totalQ')||'0'),
+  chatTitle: 'New session', isLoading: false,
+  uploadedImage: null, uploadedImageBase64: null,
+};
+
+// ── NAVIGATION ──
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('nav-'+p).classList.add('active');
+  state.page = p;
+}
+
+// ── TUTOR ──
+function setSubject(el, s) {
+  document.querySelectorAll('.subject-filter .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); state.subject = s;
+}
+function setMode(el, m) {
+  document.querySelectorAll('.toggle-btn').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); state.mode = m;
+}
+function updateGrade() {
+  state.grade = document.getElementById('grade-select').value;
+  const labels = {middle:'Grade 6–8', high:'Grade 9–12', ap:'AP / Advanced'};
+  document.getElementById('grade-label').textContent = labels[state.grade];
+}
+function newChat() {
+  if (state.messages.length > 0) saveSession();
+  state.messages = []; state.chatTitle = 'New session';
+  document.getElementById('chat-title').textContent = 'New session';
+  const msgs = document.getElementById('messages');
+  msgs.innerHTML = ''; msgs.appendChild(makeWelcome());
+  removeImage();
+}
+function clearChat() { newChat(); }
+function makeWelcome() {
+  const d = document.createElement('div');
+  d.className='welcome-screen'; d.id='welcome-screen';
+  d.innerHTML=`<div class="welcome-icon">✦</div><h2>What are you working on?</h2><p>Ask a question, upload a homework photo, or pick a topic below.</p><div class="starter-grid"><button class="starter-btn" onclick="startWith('Can you explain how to solve a system of equations using substitution?')"><div class="starter-label">Algebra</div>Systems of equations</button><button class="starter-btn" onclick="startWith('I don\\'t understand the chain rule. Can you walk me through it?')"><div class="starter-label">Calculus</div>Chain rule</button><button class="starter-btn" onclick="startWith('How do I find the area of a triangle using trigonometry?')"><div class="starter-label">Geometry</div>Triangle area & trig</button><button class="starter-btn" onclick="startWith('What is the difference between mean, median, and mode?')"><div class="starter-label">Statistics</div>Mean, median, mode</button></div>`;
+  return d;
+}
+function startWith(text) { document.getElementById('chat-input').value=text; sendMessage(); }
+function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,160)+'px'; }
+
+// Image upload
+function handleImageUpload(e) {
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    state.uploadedImageBase64 = ev.target.result.split(',')[1];
+    state.uploadedImage = file;
+    document.getElementById('preview-img').src = ev.target.result;
+    document.getElementById('image-preview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+function removeImage() {
+  state.uploadedImage = null; state.uploadedImageBase64 = null;
+  document.getElementById('image-preview').style.display = 'none';
+  document.getElementById('img-upload').value = '';
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if((!text && !state.uploadedImageBase64) || state.isLoading) return;
+  const welcome = document.getElementById('welcome-screen');
+  if(welcome) welcome.remove();
+  state.isLoading = true;
+  input.value = ''; input.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+
+  // Build message content
+  let userContent;
+  if(state.uploadedImageBase64) {
+    userContent = [
+      {type:'image', source:{type:'base64', media_type: state.uploadedImage.type, data: state.uploadedImageBase64}},
+      {type:'text', text: text || 'Please help me with this math problem.'}
+    ];
+  } else {
+    userContent = text;
+  }
+  state.messages.push({role:'user', content: userContent});
+  appendMessage('user', text || '📷 Homework photo', state.uploadedImageBase64 ? 'data:'+state.uploadedImage.type+';base64,'+state.uploadedImageBase64 : null);
+  removeImage();
+
+  if(state.messages.length===1) {
+    state.chatTitle = (text||'Homework photo').slice(0,40)+(text&&text.length>40?'…':'');
+    document.getElementById('chat-title').textContent = state.chatTitle;
+  }
+
+  const typingEl = appendTyping();
+  const gradeMap = {middle:'middle school (grades 6-8)', high:'high school (grades 9-12)', ap:'AP/advanced high school'};
+  const modeMap = {
+    guided:'Walk through every solution step by step. Never just give the final answer. After explaining, ask ONE follow-up question to check their understanding, then offer 2-3 similar practice problems.',
+    hint:'Give only a hint or the first step. Encourage the student to try before revealing more.',
+    full:'Give the complete step-by-step solution clearly and concisely.'
+  };
+  const systemPrompt = `You are MathMentor, a warm and patient AI math tutor for ${gradeMap[state.grade]} students${state.subject!=='Any'?' focused on '+state.subject:''}.
+
+Explanation style: ${modeMap[state.mode]}
+
+Rules:
+- Use LaTeX math notation wrapped in $...$ for inline math and $$...$$ for display math. Example: The quadratic formula is $$x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$
+- Break multi-step problems into numbered steps
+- Be encouraging but honest
+- Keep responses under 350 words unless the problem genuinely requires more
+- Label practice problems as "Practice problems:" numbered 1-3
+- If an image is provided, carefully read the math problem shown and solve it`;
+
+  try {
+    const res = await fetch('/api/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({system: systemPrompt, messages: state.messages})
+    });
+    const data = await res.json();
+    const reply = data.content?.map(b=>b.text||'').join('')||'Sorry, something went wrong. Please try again.';
+    typingEl.remove();
+    state.messages.push({role:'assistant', content: reply});
+    appendMessage('assistant', reply);
+    state.totalQ++;
+    localStorage.setItem('mm_totalQ', state.totalQ);
+    extractTopics(text+' '+reply);
+  } catch(e) {
+    typingEl.remove();
+    appendMessage('assistant','Connection error — please check your internet and try again.');
+  }
+  state.isLoading = false;
+  document.getElementById('send-btn').disabled = false;
+  input.focus();
+}
+
+function appendMessage(role, text, imgSrc) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div'); div.className='msg '+role;
+  const av = document.createElement('div');
+  av.className='avatar '+(role==='user'?'user-av':'ai-av');
+  av.textContent = role==='user'?'You':'✦';
+  const bubble = document.createElement('div'); bubble.className='bubble';
+  if(imgSrc) {
+    const img = document.createElement('img');
+    img.src=imgSrc; img.style.cssText='max-width:200px;border-radius:8px;display:block;margin-bottom:8px;';
+    bubble.appendChild(img);
+  }
+  const textNode = document.createElement('div');
+  textNode.innerHTML = formatMessage(text);
+  bubble.appendChild(textNode);
+  div.appendChild(av); div.appendChild(bubble);
+  msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight;
+  // Render KaTeX
+  if(role==='assistant' && window.renderMathInElement) {
+    renderMathInElement(bubble, {delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError:false});
+  }
+  return div;
+}
+function appendTyping() {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div'); div.className='msg assistant';
+  div.innerHTML=`<div class="avatar ai-av">✦</div><div class="bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; return div;
+}
+function formatMessage(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/^(\d+)\. /gm,'<br><strong>$1.</strong> ')
+    .replace(/\n/g,'<br>');
+}
+
+const topicKeywords = {
+  'Algebra':['equation','variable','linear','quadratic','factor','polynomial','inequality'],
+  'Calculus':['derivative','integral','limit','chain rule','differentiate','integrate'],
+  'Geometry':['angle','triangle','circle','area','perimeter','volume','proof'],
+  'Statistics':['mean','median','mode','probability','standard deviation','distribution'],
+  'Trigonometry':['sin','cos','tan','radian','unit circle','trig'],
+};
+function extractTopics(text) {
+  const lower = text.toLowerCase();
+  Object.entries(topicKeywords).forEach(([topic,kws])=>{
+    if(kws.some(k=>lower.includes(k))&&!state.topics.includes(topic)){
+      state.topics.push(topic);
+      localStorage.setItem('mm_topics',JSON.stringify(state.topics));
+    }
+  });
+  renderSidebarTopics();
+}
+function renderSidebarTopics() {
+  const el = document.getElementById('topic-pills');
+  if(!state.topics.length){el.textContent='Start a session to track topics';return;}
+  el.innerHTML=state.topics.map(t=>`<span class="topic-pill">${t}</span>`).join('');
+}
+function saveSession() {
+  if(!state.messages.length) return;
+  const s={id:Date.now(),title:state.chatTitle,date:new Date().toLocaleDateString(),questionCount:state.messages.filter(m=>m.role==='user').length,topics:[...state.topics]};
+  state.sessions.unshift(s);
+  if(state.sessions.length>50) state.sessions=state.sessions.slice(0,50);
+  localStorage.setItem('mm_sessions',JSON.stringify(state.sessions));
+  renderHistorySidebar();
+}
+function renderHistorySidebar() {
+  const el=document.getElementById('chat-history');
+  if(!state.sessions.length){el.innerHTML='<div style="padding:20px 12px;font-size:0.8rem;color:var(--text3);text-align:center;">Your sessions will appear here</div>';return;}
+  el.innerHTML=state.sessions.slice(0,15).map(s=>`<div class="history-item"><div class="history-title">${s.title}</div><div class="history-sub">${s.date} · ${s.questionCount} questions</div></div>`).join('');
+}
+
+// ── DRILL ──
+const drillSettings = { op:'multiply', diff:'1digit', count:20 };
+let drillState = {};
+
+function drillSelect(el, key, val) {
+  el.closest('.drill-chips').querySelectorAll('.drill-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); drillSettings[key]=val;
+}
+
+function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function genNumber(diff) {
+  if(diff==='1digit') return randInt(2,9);
+  if(diff==='2digit') return randInt(10,99);
+  if(diff==='3digit') return randInt(100,999);
+  // mixed
+  const pick=['1digit','2digit','3digit'][randInt(0,2)];
+  return genNumber(pick);
+}
+function genProblem() {
+  let op = drillSettings.op;
+  if(op==='both') op = Math.random()<0.5?'multiply':'divide';
+  const diff = drillSettings.diff;
+  if(op==='multiply') {
+    const a=genNumber(diff), b=genNumber('1digit');
+    return {display:`${a} × ${b} = ?`, answer:a*b};
+  } else {
+    const b=genNumber('1digit')||2, a=b*genNumber(diff==='1digit'?'1digit':diff);
+    return {display:`${a} ÷ ${b} = ?`, answer:a/b};
+  }
+}
+
+function startDrill() {
+  drillState = {
+    questions: Array.from({length:parseInt(drillSettings.count)},()=>genProblem()),
+    current:0, correct:0, startTime:Date.now(), timerInterval:null,
+    timePerQ:15
+  };
+  document.getElementById('drill-setup').style.display='none';
+  document.getElementById('drill-results').style.display='none';
+  document.getElementById('drill-active').style.display='block';
+  showDrillQuestion();
+}
+
+function showDrillQuestion() {
+  const q=drillState.questions[drillState.current];
+  document.getElementById('drill-problem').textContent=q.display;
+  document.getElementById('drill-qnum').textContent=`${drillState.current+1}/${drillState.questions.length}`;
+  document.getElementById('drill-score').textContent=drillState.correct;
+  document.getElementById('drill-feedback').textContent='';
+  document.getElementById('drill-feedback').className='drill-feedback';
+  const inp=document.getElementById('drill-answer');
+  inp.value=''; inp.className='drill-input'; inp.focus();
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(drillState.timerInterval);
+  let t=drillState.timePerQ;
+  const ring=document.getElementById('timer-ring');
+  const circumference=175.9;
+  document.getElementById('drill-timer').textContent=t;
+  ring.style.strokeDashoffset=0;
+  drillState.timerInterval=setInterval(()=>{
+    t--;
+    document.getElementById('drill-timer').textContent=t;
+    ring.style.strokeDashoffset=circumference*(1-t/drillState.timePerQ);
+    if(t<=0){ clearInterval(drillState.timerInterval); timeUp(); }
+  },1000);
+}
+
+function timeUp() {
+  const inp=document.getElementById('drill-answer');
+  inp.className='drill-input wrong';
+  document.getElementById('drill-feedback').textContent=`Time's up! Answer: ${drillState.questions[drillState.current].answer}`;
+  document.getElementById('drill-feedback').className='drill-feedback wrong-msg';
+  setTimeout(nextQuestion,1200);
+}
+
+function checkDrillAnswer() {
+  clearInterval(drillState.timerInterval);
+  const inp=document.getElementById('drill-answer');
+  const val=parseInt(inp.value);
+  const correct=drillState.questions[drillState.current].answer;
+  if(val===correct) {
+    drillState.correct++;
+    inp.className='drill-input correct';
+    document.getElementById('drill-feedback').textContent='✓ Correct!';
+    document.getElementById('drill-feedback').className='drill-feedback correct-msg';
+    document.getElementById('drill-score').textContent=drillState.correct;
+    setTimeout(nextQuestion,700);
+  } else {
+    inp.className='drill-input wrong';
+    document.getElementById('drill-feedback').textContent=`Not quite. The answer is ${correct}.`;
+    document.getElementById('drill-feedback').className='drill-feedback wrong-msg';
+    setTimeout(nextQuestion,1200);
+  }
+}
+
+function nextQuestion() {
+  drillState.current++;
+  if(drillState.current>=drillState.questions.length) { finishDrill(); return; }
+  showDrillQuestion();
+}
+
+function finishDrill() {
+  clearInterval(drillState.timerInterval);
+  document.getElementById('drill-active').style.display='none';
+  document.getElementById('drill-results').style.display='block';
+  const total=drillState.questions.length, correct=drillState.correct;
+  const pct=Math.round(correct/total*100);
+  const elapsed=Math.round((Date.now()-drillState.startTime)/1000);
+  const mins=Math.floor(elapsed/60), secs=elapsed%60;
+  document.getElementById('result-score').textContent=`${correct}/${total}`;
+  document.getElementById('result-time').textContent=`Completed in ${mins>0?mins+'m ':''} ${secs}s`;
+  let grade, emoji, cls;
+  if(pct>=90){grade='Excellent';emoji='🏆';cls='grade-a';}
+  else if(pct>=75){grade='Good work';emoji='⭐';cls='grade-b';}
+  else if(pct>=60){grade='Keep practicing';emoji='💪';cls='grade-c';}
+  else{grade='Needs review';emoji='📚';cls='grade-d';}
+  document.getElementById('result-emoji').textContent=emoji;
+  document.getElementById('result-grade').textContent=`${grade} — ${pct}%`;
+  document.getElementById('result-grade').className='result-grade '+cls;
+  document.getElementById('result-subtitle').textContent=`${correct} correct out of ${total}`;
+}
+
+function resetDrill() {
+  document.getElementById('drill-results').style.display='none';
+  document.getElementById('drill-active').style.display='none';
+  document.getElementById('drill-setup').style.display='block';
+}
+
+// ── CURRICULUM ──
+const curriculum = [
+  { title:'Arithmetic', icon:'🔢', topics:[
+    {name:'Multiplication (1-digit)',desc:'Times tables & fluency'},
+    {name:'Multiplication (2-digit)',desc:'Long multiplication'},
+    {name:'Multiplication (3-digit)',desc:'Multi-digit products'},
+    {name:'Division basics',desc:'Sharing equally'},
+    {name:'Long division',desc:'Multi-digit division'},
+    {name:'Fractions',desc:'Add, subtract, multiply, divide'},
+    {name:'Decimals',desc:'Place value & operations'},
+    {name:'Percentages',desc:'Of amounts, change, reverse'},
+  ]},
+  { title:'Algebra', icon:'🔣', topics:[
+    {name:'Solving linear equations',desc:'One and two variables'},
+    {name:'Systems of equations',desc:'Substitution & elimination'},
+    {name:'Quadratic equations',desc:'Factoring & quadratic formula'},
+    {name:'Polynomials',desc:'Operations & factoring'},
+    {name:'Inequalities',desc:'Linear & quadratic'},
+    {name:'Functions',desc:'Domain, range, composition'},
+    {name:'Exponential & logarithms',desc:'Rules & applications'},
+  ]},
+  { title:'Geometry', icon:'📐', topics:[
+    {name:'Angles & lines',desc:'Parallel, perpendicular, transversals'},
+    {name:'Triangles',desc:'Congruence, similarity, area'},
+    {name:'Circles',desc:'Arc length, sector area'},
+    {name:'Volume & surface area',desc:'3D shapes'},
+    {name:'Coordinate geometry',desc:'Midpoint, distance, slope'},
+    {name:'Proofs',desc:'Two-column and paragraph'},
+  ]},
+  { title:'Trigonometry', icon:'📏', topics:[
+    {name:'Right triangle trig',desc:'Sin, cos, tan basics'},
+    {name:'Unit circle',desc:'Radians & degrees'},
+    {name:'Trig identities',desc:'Pythagorean, sum/difference'},
+    {name:'Graphs of trig functions',desc:'Amplitude, period, phase'},
+  ]},
+  { title:'Calculus', icon:'∫', topics:[
+    {name:'Limits',desc:'Definition & evaluation'},
+    {name:'Derivatives',desc:'Power, product, chain rules'},
+    {name:'Applications of derivatives',desc:'Optimization, related rates'},
+    {name:'Integrals',desc:'Definite & indefinite'},
+    {name:'Fundamental theorem',desc:'Connecting derivatives & integrals'},
+  ]},
+  { title:'Statistics', icon:'📊', topics:[
+    {name:'Mean, median, mode',desc:'Measures of center'},
+    {name:'Standard deviation',desc:'Spread & variance'},
+    {name:'Probability',desc:'Basic rules & counting'},
+    {name:'Normal distribution',desc:'Z-scores & area'},
+    {name:'Hypothesis testing',desc:'p-values & significance'},
+  ]},
+];
+
+function buildCurriculum() {
+  const el = document.getElementById('curriculum-tracks');
+  el.innerHTML = curriculum.map(track=>`
+    <div class="track">
+      <div class="track-title"><span>${track.icon}</span>${track.title}</div>
+      <div class="topic-grid">
+        ${track.topics.map(t=>`
+          <div class="topic-card" onclick="openTopic('${t.name.replace(/'/g,"\\'")}')">
+            <h4>${t.name}</h4>
+            <p>${t.desc}</p>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function openTopic(name) {
+  showPage('tutor');
+  setTimeout(()=>{ startWith(`Can you teach me about: ${name}. Start with a clear explanation, then give me an example problem to try.`); },100);
+}
+
+// ── INIT ──
+renderHistorySidebar();
+renderSidebarTopics();
+buildCurriculum();
+</script>
+</body>
+</html>
